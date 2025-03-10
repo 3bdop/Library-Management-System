@@ -9,7 +9,6 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.text.Text?>
 
-
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <left>
       <AnchorPane prefHeight="500.0" prefWidth="350.0" style="-fx-background-color: #0598ff;" BorderPane.alignment="CENTER">
@@ -21,15 +20,17 @@
    <center>
       <AnchorPane prefHeight="200.0" prefWidth="350.0" BorderPane.alignment="CENTER">
          <children>
-            <TextField id="username" layoutX="101.0" layoutY="231.0" promptText="User Name" />
-            <PasswordField id="password" layoutX="101.0" layoutY="293.0" promptText="Password" />
-            <Button id="loginBtn" layoutX="129.0" layoutY="368.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="93.0" style="-fx-font-size: 17; -fx-background-color: #0598ff; -fx-font-weight: bold;" text="Login" textFill="WHITE" />
+            <TextField fx:id="username" layoutX="101.0" layoutY="231.0" promptText="User Name" />
+            <PasswordField fx:id="password" layoutX="101.0" layoutY="293.0" promptText="Password" />
+            <Button fx:id="loginBtn" layoutX="129.0" layoutY="368.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="93.0" style="-fx-font-size: 17; -fx-background-color: #0598ff; -fx-font-weight: bold;" text="Login" textFill="WHITE" />
             <Text fill="#038dff" layoutX="81.0" layoutY="163.0" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 40;" text="User Login" />
             <ImageView fitHeight="132.0" fitWidth="106.0" layoutX="122.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true">
                <image>
                   <Image url="@../../../../../Downloads/pngegg.png" />
                </image>
             </ImageView>
+            <Text fill="#04b8ff" layoutX="68.0" layoutY="254.0" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 27;" text="👤" />
+            <Text fill="#ffac05" layoutX="68.0" layoutY="316.0" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 27;" text="🔑" />
          </children>
       </AnchorPane>
    </center>
