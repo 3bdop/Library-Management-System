@@ -3,7 +3,6 @@
 <?import javafx.scene.Group?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
@@ -40,8 +39,8 @@
    <center>
       <AnchorPane prefHeight="500.0" prefWidth="157.0" BorderPane.alignment="CENTER">
          <children>
-            <Label fx:id="welcUsername" layoutX="1.0" layoutY="-4.0" prefHeight="35.0" prefWidth="147.0" style="-fx-font-size: 25; -fx-font-weight: bold;" textFill="#0550ff" />
             <Button fx:id="logout" layoutX="24.0" layoutY="456.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="98.0" style="-fx-background-color: #0598ff; -fx-font-weight: bold;" text="Logout" textAlignment="CENTER" textFill="WHITE" />
+            <Text fx:id="userWelcome" layoutX="17.0" layoutY="36.0" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-size: 20; -fx-font-weight: BOLD;" textAlignment="CENTER" wrappingWidth="88.88891983032227" />
          </children>
       </AnchorPane>
    </center>
