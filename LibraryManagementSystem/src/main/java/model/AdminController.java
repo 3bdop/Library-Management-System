@@ -4,6 +4,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import utlis.DBUtils;
 
@@ -22,7 +23,7 @@ public class AdminController {
     @FXML private PasswordField newPass;
     @FXML private Button createBtn;
     @FXML private ComboBox<String> newRole;
-    @FXML private Label welcUsername;
+    @FXML private Text userWelcome;
     @FXML private Button logout;
     @FXML private ListView<String> listUsers;
 
@@ -44,7 +45,7 @@ public class AdminController {
             stage.setTitle("Library Management System - Admin");
             stage.show();
 
-            welcUsername.setText("Welcome, "+username+"!");
+            userWelcome.setText("Welcome, "+username+"!");
 
             createBtn.setOnAction(e->handleNewUser());
             logout.setOnAction(e->handleLogout());
