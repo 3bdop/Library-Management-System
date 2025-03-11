@@ -77,7 +77,8 @@ public class UserLogin {
                 switch (role.toLowerCase()) {
                     case "admin":
                         System.out.println("Redirecting to Admin Dashboard...");
-                        // TODO: load the Admin Dashboard scene.
+                        //? load the Admin Dashboard scene.
+                        new AdminController(stage, user);
                         break;
                     case "cataloging":
                         System.out.println("Redirecting to Cataloging Dashboard...");
