@@ -25,3 +25,9 @@ The Library Management System is intended for library staff and administrators t
   
 ![image](https://github.com/user-attachments/assets/302d8187-f543-465f-a438-b78c7f23f426)
 
+---
+VM options:
+```
+--module-path C:\javafx-sdk-23.0.1\lib  --add-modules javafx.controls,javafx.fxml,javafx.graphics  --add-exports=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED  --add-exports=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED 
+```
+
