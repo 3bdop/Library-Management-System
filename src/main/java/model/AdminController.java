@@ -37,7 +37,7 @@ public class AdminController {
     private void loadView() {
         try {
             // Adjust the path to match your resource folder structure.
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/AdminView.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/main/resources/AdminView.fxml"));
             loader.setController(this);
             Parent root = loader.load();
             Scene scene = new Scene(root);
