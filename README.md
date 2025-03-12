@@ -39,8 +39,12 @@ Follow these steps to get the project up and running:
    ```
    git clone https://github.com/3bdop/Library-Management-System.git
    ```
+2. **Install SDKs:**
+     - Make sure you have JavaFX installed, if not [click here](https://gluonhq.com/products/javafx/).
+     - Make sure you have Java MySQL Connecter installed, if not [click here](https://dev.mysql.com/downloads/connector/j/)
+     - Make sure both SDKs are on the c:\
 
-2. **Setup Application Configration:**
+4. **Setup Application Configration:**
      - Add new application configration.
      - Select the App as the main class.
      - Modify options --> Add VM options.
