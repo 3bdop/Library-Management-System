@@ -56,4 +56,5 @@ Follow these steps to get the project up and running:
        --add-exports=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED
        --add-exports=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED
        ```
+       > **_Note:_** If your JavaFX lib path is not in c:\\ then change ```--module-path <javafx\lib path>```
    
