@@ -8,6 +8,8 @@ The purpose of this document is to define the functional and non-functional requ
 ### 1.2 Scope
 The Library Management System is intended for library staff and administrators to manage internal operations, including book lending, cataloging, and user account management. The system must also implement security measures to prevent unauthorized access and potential abuse.
 
+<br/>
+
 ## 2. Non-Functional Requirements
 
 - Security:	The system should ensure security against potential threats.
@@ -15,19 +17,44 @@ The Library Management System is intended for library staff and administrators t
 - Usability:	The system should provide an intuitive UI for staff users.
 - Availability:	The system must be available 99.9% of the time.
 
+
 ## 3. Use Case Diagram
-- You can find the SRS [here](https://github.com/3bdop/Library-Management-System/blob/main/Library_Management_System_SRS.pdf).
-  
-![image](https://github.com/user-attachments/assets/6e70ed5b-f902-46cb-966f-98a0ab8f4572)
+- You can find the SRS [here](https://github.com/3bdop/Library-Management-System/blob/main/documents/Library_Management_System_SRS.pdf).
+
+  [comment]: <![image](https://github.com/user-attachments/assets/6e70ed5b-f902-46cb-966f-98a0ab8f4572)>
 
 ## 4. High Level Data Flow Diagram
-- You can find the SDD [here](https://github.com/3bdop/Library-Management-System/blob/main/Library_Management_System_SDD.pdf).
+- You can find the SDD [here](https://github.com/3bdop/Library-Management-System/blob/main/documents/Library_Management_System_SDD.pdf).
   
-![image](https://github.com/user-attachments/assets/302d8187-f543-465f-a438-b78c7f23f426)
+[comment]: <![image](https://github.com/user-attachments/assets/302d8187-f543-465f-a438-b78c7f23f426)>
 
----
-VM options:
-```
---module-path C:\javafx-sdk-23.0.1\lib  --add-modules javafx.controls,javafx.fxml,javafx.graphics  --add-exports=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED  --add-exports=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED 
-```
+<br/>
 
+# Installation 🛠️
+
+Follow these steps to get the project up and running:
+
+1. **Install SDKs:**
+     - Make sure you have JavaFX installed, if not [click here](https://gluonhq.com/products/javafx/).
+     - Make sure you have Java MySQL Connecter installed, if not [click here](https://dev.mysql.com/downloads/connector/j/).
+     - Make sure both SDKs are on the c:\ drive.
+       
+2. **Clone the repository:**
+
+   ```Bash
+   git clone https://github.com/3bdop/Library-Management-System.git
+   ```
+
+3. **Setup Application Configration:**
+     - Add new application configration.
+     - Select the App as the main class.
+     - Modify options --> Add VM options.
+     - Add the following for VM options:
+       ```Bash
+       --module-path C:\javafx-sdk-23.0.1\lib
+       --add-modules javafx.controls,javafx.fxml,javafx.graphics
+       --add-exports=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED
+       --add-exports=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED
+       ```
+       > **_Note:_** If your JavaFX lib path is not in c:\\ then change ```--module-path <javafx\lib path>```
+   
