@@ -82,7 +82,7 @@ public class UserLogin {
                         break;
                     case "cataloging":
                         System.out.println("Redirecting to Cataloging Dashboard...");
-                        // TODO: load the Cataloging Dashboard scene.
+                        new CatalogStaffController();
                         break;
                     case "librarian":
                         System.out.println("Redirecting to Librarian Dashboard...");
