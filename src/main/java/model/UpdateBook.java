@@ -42,6 +42,9 @@ public class UpdateBook {
         TextField category = new TextField();
         category.setPromptText("Category");
 
+        TextField year = new TextField();
+        year.setPromptText("Published Year");
+
         grid.add(new Label("Author:"), 0, 0);
         grid.add(author, 1, 0);
 
@@ -54,11 +57,14 @@ public class UpdateBook {
         grid.add(new Label("Category:"), 0, 3);
         grid.add(category, 1, 3);
 
+        grid.add(new Label("Published Year:"), 0, 4);
+        grid.add(year, 1, 4);
+
         dialog.getDialogPane().setContent(grid);
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == confirm) {
-                return author.getText() + ";" + title.getText() + ";" + isbn.getText() + ";" + category.getText();
+                return author.getText() + ";" + title.getText() + ";" + isbn.getText() + ";" + category.getText() + ";" + year.getText();
             }
             return null;
         });

@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Alert;
@@ -22,23 +23,14 @@ public class CatalogStaffController {
 
     private Stage stage; // Declare the stage variable
 
-    @FXML
-    private ListView<String> booksList;
-
-    @FXML
-    private TextField author;
-
-    @FXML
-    private TextField book;
-
-    @FXML
-    private TextField isbn;
-
-    @FXML
-    private TextField category;
-
-    @FXML
-    private TextField search;
+    @FXML private ListView<String> booksList;
+    @FXML private TextField author;
+    @FXML private TextField book;
+    @FXML private TextField isbn;
+    @FXML private TextField category;
+    @FXML private TextField year;
+    @FXML private TextField search;
+    @FXML private Button logout;
 
     // Constructor that accepts a Stage parameter
     public CatalogStaffController(Stage stage) {
@@ -55,10 +47,12 @@ public class CatalogStaffController {
             Scene scene = new Scene(root);
             stage.setScene(scene);
             stage.setTitle("Library Management System - Cataloging Staff");
+            logout.setOnAction(e->handleLogout());
             stage.show();
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
     @FXML
@@ -98,17 +92,19 @@ public class CatalogStaffController {
                 String newTitle = newDetails[1];
                 String newIsbn = newDetails[2];
                 String newCategory = newDetails[3];
+                String newYear= newDetails[4];
 
                 Connection con = DBUtils.establishConnection();
                 PreparedStatement ps = null;
                 try {
-                    String query = "UPDATE books SET author=?, title=?, isbn=?, category=? WHERE isbn=?";
+                    String query = "UPDATE books SET author=?, title=?, isbn=?, category=?, published_year=? WHERE isbn=?";
                     ps = con.prepareStatement(query);
                     ps.setString(1, newAuthor);
                     ps.setString(2, newTitle);
                     ps.setString(3, newIsbn);
                     ps.setString(4, newCategory);
-                    ps.setString(5, oldIsbn);
+                    ps.setString(5, newYear);
+                    ps.setString(6, oldIsbn);
                     ps.executeUpdate();
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -156,8 +152,9 @@ public class CatalogStaffController {
         String bookText = book.getText();
         String isbnText = isbn.getText();
         String categoryText = category.getText();
+        String yearText = year.getText();
 
-        if (authorText.isEmpty() || bookText.isEmpty() || isbnText.isEmpty() || categoryText.isEmpty()) {
+        if (authorText.isEmpty() || bookText.isEmpty() || isbnText.isEmpty() || categoryText.isEmpty() || yearText.isEmpty()) {
             showAlert("Missing Information", "Please fill in all fields.");
             return;
         }
@@ -165,12 +162,13 @@ public class CatalogStaffController {
         Connection con = DBUtils.establishConnection();
         PreparedStatement ps = null;
         try {
-            String query = "INSERT INTO books (author, title, isbn, category) VALUES (?, ?, ?, ?)";
+            String query = "INSERT INTO books (author, title, isbn, category, published_year) VALUES (?, ?, ?, ?, ?)";
             ps = con.prepareStatement(query);
             ps.setString(1, authorText);
             ps.setString(2, bookText);
             ps.setString(3, isbnText);
             ps.setString(4, categoryText);
+            ps.setString(5, yearText);
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -182,6 +180,7 @@ public class CatalogStaffController {
         book.setText("");
         isbn.setText("");
         category.setText("");
+        year.setText("");
 
         loadBooks();
     }
@@ -200,7 +199,8 @@ public class CatalogStaffController {
                 String title = rs.getString("title");
                 String isbn = rs.getString("isbn");
                 String category = rs.getString("category");
-                books.add(author + ";" + title + ";" + isbn + ";" + category);
+                String year = rs.getString("published_year");
+                books.add(author + ";" + title + ";" + isbn + ";" + category + ";" + year);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -216,5 +216,10 @@ public class CatalogStaffController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    @FXML
+    private void handleLogout() {
+        new UserLogin(stage);
     }
 }
