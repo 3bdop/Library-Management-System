@@ -80,9 +80,9 @@ public class UserLogin {
                         //? load the Admin Dashboard scene.
                         new AdminController(stage, user);
                         break;
-                    case "cataloging":
+                    case "cataloger":
                         System.out.println("Redirecting to Cataloging Dashboard...");
-                        new CatalogStaffController();
+                        new CatalogStaffController(stage);
                         break;
                     case "librarian":
                         System.out.println("Redirecting to Librarian Dashboard...");
