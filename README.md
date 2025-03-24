@@ -3,7 +3,7 @@
 ## 1. Introduction
 
 ### 1.1 Purpose
-The purpose of this document is to define the functional and non-functional requirements for the Library Management System. The Library Management System is a desktop-based application for librarians to manage library operations efficiently. It includes book checkouts, returns, cataloging, member management, due date tracking, fines for late returns, and a search functionality for finding books, while ensuring security against potential threats.
+The Library Management System is a desktop-based application for librarians to manage library operations efficiently. It includes book checkouts, returns, cataloging, member management, due date tracking, fines for late returns, and a search functionality for finding books, while ensuring security against potential threats.
 
 ### 1.2 Scope
 The Library Management System is intended for library staff and administrators to manage internal operations, including book lending, cataloging, and user account management. The system must also implement security measures to prevent unauthorized access and potential abuse.
