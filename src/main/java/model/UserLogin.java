@@ -86,7 +86,7 @@ public class UserLogin {
                         break;
                     case "librarian":
                         System.out.println("Redirecting to Librarian Dashboard...");
-                        // TODO: load the Librarian Dashboard scene.
+                        new LibrarianStaffController(stage);
                         break;
                     default:
                         System.out.println("Unknown role. Access denied.");
