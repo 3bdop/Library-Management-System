@@ -8,6 +8,9 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import utlis.DBUtils;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,6 +30,8 @@ public class AdminController {
     @FXML private Button logout;
     @FXML private ListView<String> listUsers;
 
+    String algorithm = "SHA-256";
+    byte[] salt = createSalt();
 
     public AdminController(Stage stage, String username){
         this.stage = stage;
@@ -77,14 +82,15 @@ public class AdminController {
             return;
         }
 
-        String insertQuery = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
+        String insertQuery = "INSERT INTO users (username, password, salt, role) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = DBUtils.establishConnection();
              PreparedStatement stmt = conn.prepareStatement(insertQuery)) {
-
+            //? -------------------------Storing the hashed password and generated salt-------------------------
             stmt.setString(1, username);
-            stmt.setString(2, password);
-            stmt.setString(3, role);
+            stmt.setString(2, generateHash(password, algorithm, salt));
+            stmt.setString(3, bytesToStringHex(salt));
+            stmt.setString(4, role);
 
             int rowsInserted = stmt.executeUpdate();
             if (rowsInserted > 0) {
@@ -95,6 +101,8 @@ public class AdminController {
         } catch (SQLException e) {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to create user.");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -132,6 +140,33 @@ public class AdminController {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to retrieve users.");
         }
+    }
+//?---------------------------Password Hashing and Salting--------------------------------------
+    private static String generateHash(String data, String algorithm, byte[] salt) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance(algorithm);
+        digest.reset();
+        digest.update(salt);
+        byte[] hash = digest.digest(data.getBytes());
+        return bytesToStringHex(hash);
+    }
+
+    private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
+
+    public static String bytesToStringHex(byte[] bytes){
+        char[] hexChars = new char[bytes.length *  2];
+        for(int j = 0; j < bytes.length; j++){
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+
+    public static byte[] createSalt(){
+        byte[] bytes = new byte[5];
+        SecureRandom rand = new SecureRandom();
+        rand.nextBytes(bytes);
+        return bytes;
     }
 
 
