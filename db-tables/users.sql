@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 12, 2025 at 03:20 PM
+-- Generation Time: Mar 25, 2025 at 03:45 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -29,7 +29,8 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `users` (
   `username` varchar(32) NOT NULL,
-  `password` varchar(32) NOT NULL,
+  `password` varchar(64) NOT NULL,
+  `salt` varchar(64) NOT NULL,
   `role` varchar(32) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -37,11 +38,10 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`username`, `password`, `role`) VALUES
-('abood', '123!!', 'admin'),
-('braa', '123', 'Cataloger'),
-('hussam', 'hard', 'Librarian'),
-('omar', '123', 'Librarian');
+INSERT INTO `users` (`username`, `password`, `salt`, `role`) VALUES
+('abood', '17AD93F50E2B0906A627ED4852698ABC97DA85EC100011EC138AD199EF2F1BB1', '5E80914691', 'Cataloger'),
+('admin', '408016690D2B9F43B04F1FCCC21E35B248FF9F8AC151966B4E2045130493B637', 'A5B6E61EE4', 'admin'),
+('braa', '59D7C085DF0A90165C5BFD12B2B3C9648ECDB28A905AF3768DD93CE353C3B658', '002165DC46', 'Librarian');
 
 --
 -- Indexes for dumped tables
