@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 15, 2025 at 10:41 AM
+-- Generation Time: Mar 26, 2025 at 01:20 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -29,7 +29,7 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `books` (
   `book_id` int(11) NOT NULL,
-  `isbn` varchar(15) NOT NULL,
+  `isbn` varchar(20) NOT NULL,
   `title` varchar(255) NOT NULL,
   `author` varchar(255) NOT NULL,
   `category` varchar(100) DEFAULT NULL,
@@ -42,16 +42,15 @@ CREATE TABLE `books` (
 --
 
 INSERT INTO `books` (`book_id`, `isbn`, `title`, `author`, `category`, `published_year`, `is_available`) VALUES
-(1, '9780131103627', 'The C Programming Language', 'Brian W. Kernighan, Dennis M. Ritchie', 'Programming', '1988', 1),
-(2, '9780596009205', 'Head First Java', 'Kathy Sierra, Bert Bates', 'Programming', '2005', 1),
+(1, '9780131103627', 'The C Programming Language', 'Brian W. Kernighan, Dennis M. Ritchie', 'Programming', '1988', 0),
+(2, '9780596009205', 'Head First Java', 'Kathy Sierra, Bert Bates', 'Programming', '2005', 0),
 (3, '9780132350884', 'Clean Code', 'Robert C. Martin', 'Software Engineering', '2008', 1),
 (4, '9780201633610', 'Design Patterns', 'Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides', 'Software Engineering', '1994', 1),
-(5, '9781491950357', 'Learning SQL', 'Alan Beaulieu', 'Databases', '2020', 1),
+(5, '9781491950357', 'Learning SQL', 'Alan Beaulieu', 'Databases', '2020', 0),
 (7, '9780262033848', 'Introduction to Algorithms', 'Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, Clifford Stein', 'Algorithms', '2009', 1),
 (8, '9781617295522', 'Grokking Algorithms', 'Aditya Y. Bhargava', 'Algorithms', '2016', 1),
 (9, '9780134494166', 'Software Architecture in Practice', 'Len Bass, Paul Clements, Rick Kazman', 'Software Engineering', '2012', 1),
-(10, '9781492078005', 'Database Design for Mere Mortals', 'Michael J. Hernandez', 'Databases', '2020', 1),
-(15, '98879789834', 'Test Book 1', 'Bara', 'Fiction', '2025', 1);
+(10, '9781492078005', 'Database Design for Mere Mortals', 'Michael J. Hernandez', 'Databases', '2020', 1);
 
 --
 -- Indexes for dumped tables
@@ -61,7 +60,8 @@ INSERT INTO `books` (`book_id`, `isbn`, `title`, `author`, `category`, `publishe
 -- Indexes for table `books`
 --
 ALTER TABLE `books`
-  ADD PRIMARY KEY (`book_id`);
+  ADD PRIMARY KEY (`book_id`),
+  ADD UNIQUE KEY `idx_isbn` (`isbn`);
 
 --
 -- AUTO_INCREMENT for dumped tables
