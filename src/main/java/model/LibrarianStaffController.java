@@ -121,18 +121,28 @@ public class LibrarianStaffController {
                 return;
             }
 
-            // Create dialog for loan details
+            // Show loan dialog
             Dialog<List<String>> dialog = createLoanDialog();
             Optional<List<String>> result = dialog.showAndWait();
 
             if (result.isPresent()) {
                 List<String> loanDetails = result.get();
-                String memberName = loanDetails.get(0);
-                String phone = loanDetails.get(1);
-                String dueDate = loanDetails.get(2);
+                String dueDate = loanDetails.get(3);
 
-                // Process the loan
-                processLoan(isbn, memberName, phone, dueDate);
+                // Validate due date was entered
+                if (dueDate.isEmpty()) {
+                    showAlert("Due Date Required", "Please enter a due date");
+                    return;
+                }
+
+                // If using new member, validate name and phone
+                if (loanDetails.get(0).isEmpty() &&
+                        (loanDetails.get(1).isEmpty() || loanDetails.get(2).isEmpty())) {
+                    showAlert("Information Required", "For new members, please provide both name and phone number");
+                    return;
+                }
+
+                processLoan(isbn, loanDetails);
             }
         } else {
             showAlert("No Selection", "Please select a book to loan.");
@@ -143,7 +153,7 @@ public class LibrarianStaffController {
     private Dialog<List<String>> createLoanDialog() {
         Dialog<List<String>> dialog = new Dialog<>();
         dialog.setTitle("Loan Book");
-        dialog.setHeaderText("Enter Member Info and Due Date\n(Note: Fine of 5QR per day late)");
+        dialog.setHeaderText("Enter Member Info & Due Date\n(Note: Fine of 5QR per day late)");
 
         ButtonType loanButtonType = new ButtonType("Loan", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(loanButtonType, ButtonType.CANCEL);
@@ -153,8 +163,11 @@ public class LibrarianStaffController {
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 150, 10, 10));
 
-        TextField memberField = new TextField();
-        memberField.setPromptText("Firstname Lastname");
+        TextField memberIdField = new TextField();
+        memberIdField.setPromptText("Member ID");
+
+        TextField memberNameField = new TextField();
+        memberNameField.setPromptText("Firstname Lastname");
 
         TextField phoneField = new TextField();
         phoneField.setPromptText("55123456");
@@ -162,20 +175,26 @@ public class LibrarianStaffController {
         TextField dueDateField = new TextField();
         dueDateField.setPromptText("yyyy-MM-dd");
 
-        grid.add(new Label("Member Name:"), 0, 0);
-        grid.add(memberField, 1, 0);
-        grid.add(new Label("Phone Number:"), 0, 1);
-        grid.add(phoneField, 1, 1);
-        grid.add(new Label("Due Date:"), 0, 2);
-        grid.add(dueDateField, 1, 2);
+        grid.add(new Label("Member ID:"), 0, 0);
+        grid.add(memberIdField, 1, 0);
+        grid.add(new Label(""), 0, 1);
+        grid.add(new Label("Register New Member"), 0, 2);
+        grid.add(new Label("Member Name:"), 0, 3);
+        grid.add(memberNameField, 1, 3);
+        grid.add(new Label("Phone:"), 0, 4);
+        grid.add(phoneField, 1, 4);
+        grid.add(new Label(""), 0, 5);
+        grid.add(new Label("Due Date:"), 0, 6);
+        grid.add(dueDateField, 1, 6);
 
         dialog.getDialogPane().setContent(grid);
-        Platform.runLater(() -> memberField.requestFocus());
+        Platform.runLater(() -> memberIdField.requestFocus());
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == loanButtonType) {
                 return Arrays.asList(
-                        memberField.getText().trim(),
+                        memberIdField.getText().trim(),
+                        memberNameField.getText().trim(),
                         phoneField.getText().trim(),
                         dueDateField.getText().trim()
                 );
@@ -211,33 +230,20 @@ public class LibrarianStaffController {
         return available;
     }
 
-    private void processLoan(String isbn, String memberName, String phone, String dueDate) {
-        // Validate member name
-        if (!isValidMemberName(memberName)) {
-            showAlert("Invalid Member Name",
-                    "Please enter member name in 'Firstname Lastname' format, make sure first letter is capitalized");
-            return;
-        }
+    private void processLoan(String isbn, List<String> loanDetails) {
+        String memberIdStr = loanDetails.get(0);
+        String memberName = loanDetails.get(1);
+        String phone = loanDetails.get(2);
+        String dueDate = loanDetails.get(3);
 
-        // Validate phone number
-        if (!isValidPhoneNumber(phone)) {
-            showAlert("Invalid Phone Number",
-                    "Phone number must be Qatari number (e.g., 55123456)");
-            return;
-        }
-
-        // Validate date format
+        // Validate due date first
         if (!isValidDate(dueDate)) {
-            showAlert("Invalid Due Date",
-                    "Please enter due date in yyyy-MM-dd format (e.g., 2025-12-31)");
+            showAlert("Invalid Due Date", "Please enter due date in yyyy-MM-dd format (e.g., 2025-12-31)");
             return;
         }
 
-        // Check if due date is in the future
-        LocalDate dueLocalDate = LocalDate.parse(dueDate);
-        if (dueLocalDate.isBefore(LocalDate.now())) {
-            showAlert("Invalid Due Date",
-                    "Due date must be in the future");
+        if (LocalDate.parse(dueDate).isBefore(LocalDate.now())) {
+            showAlert("Invalid Due Date", "Due date must be in the future");
             return;
         }
 
@@ -247,8 +253,63 @@ public class LibrarianStaffController {
         try {
             con.setAutoCommit(false);
 
-            int memberId = getOrCreateMember(con, memberName, phone);
+            int memberId;
 
+            if (!memberIdStr.isEmpty()) {
+                // If member exists
+                try {
+                    memberId = Integer.parseInt(memberIdStr);
+
+                    // Verify member exists
+                    String memberQuery = "SELECT name FROM members WHERE member_id = ?";
+                    ps = con.prepareStatement(memberQuery);
+                    ps.setInt(1, memberId);
+                    ResultSet rs = ps.executeQuery();
+
+                    if (!rs.next()) {
+                        showAlert("Member Not Found", "No member found with ID: " + memberId);
+                        return;
+                    }
+
+                    memberName = rs.getString("name"); // Get name from DB
+                } catch (NumberFormatException e) {
+                    showAlert("Invalid Member ID", "Member ID must be a number");
+                    return;
+                }
+            } else {
+                // If new member
+                if (memberName.isEmpty()) {
+                    showAlert("Name Required", "Please enter member name");
+                    return;
+                }
+
+                if (!isValidMemberName(memberName)) {
+                    showAlert("Invalid Member Name",  "Please enter member name in 'Firstname Lastname' format, make sure first letter is capitalized");
+                    return;
+                }
+
+                if (!isValidPhoneNumber(phone)) {
+                    showAlert("Invalid Phone Number",
+                            "Phone number must be Qatari number (e.g., 55123456)");
+                    return;
+                }
+
+                // Create new member
+                String insertQuery = "INSERT INTO members (name, phone) VALUES (?, ?)";
+                ps = con.prepareStatement(insertQuery, PreparedStatement.RETURN_GENERATED_KEYS);
+                ps.setString(1, memberName);
+                ps.setString(2, phone);
+                ps.executeUpdate();
+
+                ResultSet rs = ps.getGeneratedKeys();
+                if (!rs.next()) {
+                    throw new SQLException("Failed to create member");
+                }
+
+                memberId = rs.getInt(1);
+            }
+
+            // Process the loan
             String loanQuery = "INSERT INTO loans (isbn, member_id, loan_date, due_date, fine_per_day) " +
                     "VALUES (?, ?, CURDATE(), ?, 5.00)";
             ps = con.prepareStatement(loanQuery);
@@ -257,6 +318,7 @@ public class LibrarianStaffController {
             ps.setString(3, dueDate);
             ps.executeUpdate();
 
+            // Update book status
             String updateBookQuery = "UPDATE books SET is_available = 0 WHERE isbn = ?";
             ps = con.prepareStatement(updateBookQuery);
             ps.setString(1, isbn);
@@ -264,15 +326,16 @@ public class LibrarianStaffController {
 
             con.commit();
 
-            // Show success alert
+            // Show success message
             Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
-            successAlert.setTitle("Success");
-            successAlert.setHeaderText("Book Checkout Successful");
+            successAlert.setTitle("Loan Successful");
+            successAlert.setHeaderText("Book Checkout Completed");
             successAlert.setContentText(String.format(
-                    "Book successfully checked out to: %s\n" +
-                            "Phone: %s\n" +
+                    "Book successfully checked out to:\n" +
+                            "Member ID: %d\n" +
+                            "Name: %s\n" +
                             "Due Date: %s",
-                    memberName, phone, dueDate
+                    memberId, memberName, dueDate
             ));
             successAlert.showAndWait();
 
@@ -284,14 +347,11 @@ public class LibrarianStaffController {
                 ex.printStackTrace();
             }
 
-            String errorMessage;
+            String errorMessage = "Database error: " + e.getMessage();
             if (e.getSQLState() != null && e.getSQLState().equals("23000")) {
-                errorMessage = "This book is already checked out to another member.";
-            } else {
-                errorMessage = "Database error: " + e.getMessage();
+                errorMessage = "This book is already checked out to another member. Or Failed to register new member";
             }
-
-            showAlert("Checkout Failed", errorMessage);
+            showAlert("Loan Failed", errorMessage);
         } finally {
             try {
                 con.setAutoCommit(true);
