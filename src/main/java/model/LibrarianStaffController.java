@@ -328,6 +328,125 @@ public class LibrarianStaffController {
         throw new SQLException("Failed to create member");
     }
 
+    @FXML
+    protected void returnBook() {
+        String selectedBook = booksList.getSelectionModel().getSelectedItem();
+        if (selectedBook != null) {
+            String[] bookDetails = selectedBook.split(";");
+            String isbn = bookDetails[2].trim();
+
+            // Check if book is actually checked out
+            if (isBookAvailable(isbn)) {
+                showAlert("Book Available", "This book is not currently checked out.");
+                return;
+            }
+
+            // Confirm return
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Confirm Return");
+            confirm.setHeaderText("Confirm Book Return");
+            confirm.setContentText("Are you sure you want to return this book?");
+
+            Optional<ButtonType> result = confirm.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                processReturn(isbn);
+            }
+        } else {
+            showAlert("No Selection", "Please select a book to return.");
+        }
+    }
+
+    private void processReturn(String isbn) {
+        Connection con = DBUtils.establishConnection();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            con.setAutoCommit(false);
+
+            // Get the active loan for the book
+            String getLoanQuery = "SELECT * FROM loans WHERE isbn = ? AND returned = 0";
+            ps = con.prepareStatement(getLoanQuery);
+            ps.setString(1, isbn);
+            rs = ps.executeQuery();
+
+            if (!rs.next()) {
+                showAlert("Error", "No active loan found for this book.");
+                return;
+            }
+
+            int loanId = rs.getInt("loan_id");
+            int memberId = rs.getInt("member_id");
+            LocalDate dueDate = rs.getDate("due_date").toLocalDate();
+            LocalDate returnDate = LocalDate.now();
+
+            // Calculate fine (5 QR per day after due date)
+            int daysLate = (int) Math.max(0, returnDate.toEpochDay() - dueDate.toEpochDay());
+            double fineAmount = daysLate * 5.0;
+
+            // Update loan record
+            String updateLoanQuery = "UPDATE loans SET returned = 1, return_date = CURDATE() WHERE loan_id = ?";
+            ps = con.prepareStatement(updateLoanQuery);
+            ps.setInt(1, loanId);
+            ps.executeUpdate();
+
+            // Update book availability
+            String updateBookQuery = "UPDATE books SET is_available = 1 WHERE isbn = ?";
+            ps = con.prepareStatement(updateBookQuery);
+            ps.setString(1, isbn);
+            ps.executeUpdate();
+
+            // Get member details for the alert message
+            String memberQuery = "SELECT name FROM members WHERE member_id = ?";
+            ps = con.prepareStatement(memberQuery);
+            ps.setInt(1, memberId);
+            rs = ps.executeQuery();
+            String memberName = rs.next() ? rs.getString("name") : "Unknown Member";
+
+            con.commit();
+
+            // Show return confirmation with fine details
+            showReturnConfirmation(memberName, isbn, dueDate, returnDate, fineAmount);
+            loadBooks();
+
+        } catch (SQLException e) {
+            try {
+                con.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            showAlert("Database Error", "Failed to process return: " + e.getMessage());
+        } finally {
+            try {
+                con.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            DBUtils.closeConnection(con, ps);
+        }
+    }
+
+    private void showReturnConfirmation(String memberName, String isbn, LocalDate dueDate, LocalDate returnDate, double fineAmount) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Return Processed");
+        alert.setHeaderText("Book Returned Successfully");
+
+        String fineMessage = fineAmount > 0 ?
+                String.format("Fine Amount: %.2f QR (%d days late)", fineAmount, (int)(returnDate.toEpochDay() - dueDate.toEpochDay())) :
+                "No fine applied (returned on time)";
+
+        alert.setContentText(String.format(
+                "Book with ISBN %s has been returned.\n" +
+                        "Member: %s\n" +
+                        "Due Date: %s\n" +
+                        "Return Date: %s\n" +
+                        "%s",
+                isbn, memberName, dueDate, returnDate, fineMessage
+        ));
+
+        alert.showAndWait();
+    }
+
     // Input Validation methods using regular expressions
     private boolean isValidDate(String dateStr) {
         String dateRegex = "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$";
