@@ -21,8 +21,8 @@ public class DBUtils {
     }
     public static void closeConnection(Connection con,Statement stmt){
         try{
-            stmt.close();
-            con.close();
+            if (stmt != null) stmt.close();
+            if (con != null) con.close();
             System.out.println("Connection is closed");        
         }catch(SQLException e){
             e.getMessage();
