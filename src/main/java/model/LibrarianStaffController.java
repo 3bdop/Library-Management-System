@@ -9,6 +9,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import utlis.DBUtils;
@@ -21,10 +22,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import main.java.model.Book;
+
 public class LibrarianStaffController {
     private Stage stage; // Declare the stage variable
 
-    @FXML private ListView<String> booksList;
+    // TableView and its columns
+    @FXML private TableView<Book> booksList;
+    @FXML private TableColumn<Book, Integer> bookIdColumn;
+    @FXML private TableColumn<Book, String> isbnColumn;
+    @FXML private TableColumn<Book, String> titleColumn;
+    @FXML private TableColumn<Book, String> authorColumn;
+    @FXML private TableColumn<Book, String> categoryColumn;
+    @FXML private TableColumn<Book, String> yearColumn;
+    @FXML private TableColumn<Book, String> availabilityColumn;
+
+    // Other controls
     @FXML private TextField author;
     @FXML private TextField book;
     @FXML private TextField isbn;
@@ -32,6 +45,9 @@ public class LibrarianStaffController {
     @FXML private TextField year;
     @FXML private TextField search;
     @FXML private Button logout;
+
+    // Store all books for filtering/searching
+    private ObservableList<Book> allBooks = FXCollections.observableArrayList();
 
     // Constructor that accepts a Stage parameter
     public LibrarianStaffController(Stage stage) {
@@ -43,15 +59,20 @@ public class LibrarianStaffController {
     protected void searchBook() {
         String searchText = search.getText().strip().toLowerCase();
         if (searchText.length() >= 3) {
-            ObservableList<String> filteredBooks = FXCollections.observableArrayList();
-            for (String book : booksList.getItems()) {
-                if (book.toLowerCase().contains(searchText)) {
-                    filteredBooks.add(book);
+            ObservableList<Book> filteredBooks = FXCollections.observableArrayList();
+            for (Book bk : allBooks) {
+                if (bk.getTitle().toLowerCase().contains(searchText) ||
+                        bk.getAuthor().toLowerCase().contains(searchText) ||
+                        bk.getIsbn().toLowerCase().contains(searchText) ||
+                        bk.getCategory().toLowerCase().contains(searchText) ||
+                        bk.getPublishedYear().contains(searchText)
+                ) {
+                    filteredBooks.add(bk);
                 }
             }
             booksList.setItems(filteredBooks);
         } else {
-            loadBooks();
+            booksList.setItems(allBooks);
         }
     }
 
@@ -64,92 +85,103 @@ public class LibrarianStaffController {
             Scene scene = new Scene(root);
             stage.setScene(scene);
             stage.setTitle("Library Management System - Librarian Staff");
-            logout.setOnAction(e->handleLogout());
+            // It's safe to set logout action here if the button is injected in FXML
+            logout.setOnAction(e -> handleLogout());
             stage.show();
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     @FXML
     public void initialize() {
+        // Initialize table columns with appropriate property names from the Book model
+        bookIdColumn.setCellValueFactory(new PropertyValueFactory<>("bookId"));
+        isbnColumn.setCellValueFactory(new PropertyValueFactory<>("isbn"));
+        titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
+        authorColumn.setCellValueFactory(new PropertyValueFactory<>("author"));
+        categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
+        yearColumn.setCellValueFactory(new PropertyValueFactory<>("publishedYear"));
+        availabilityColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+
         loadBooks();
     }
 
+    // Updated loadBooks to load Book objects rather than Strings
     private void loadBooks() {
-            ObservableList<String> books = FXCollections.observableArrayList();
-            Connection con = DBUtils.establishConnection();
-            PreparedStatement ps = null;
-            ResultSet rs = null;
+        allBooks.clear();
+        Connection con = DBUtils.establishConnection();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
 
-            try {
-                String query = "SELECT * FROM books";
-                ps = con.prepareStatement(query);
-                rs = ps.executeQuery();
+        try {
+            String query = "SELECT * FROM books";
+            ps = con.prepareStatement(query);
+            rs = ps.executeQuery();
 
-                while (rs.next()) {
-                    String author = rs.getString("author");
-                    String title = rs.getString("title");
-                    String isbn = rs.getString("isbn");
-                    String category = rs.getString("category");
-                    String year = rs.getString("published_year");
-                    boolean available = rs.getBoolean("is_available");
+            while (rs.next()) {
+                int bookId = rs.getInt("book_id");
+                String isbn = rs.getString("isbn");
+                String title = rs.getString("title");
+                String author = rs.getString("author");
+                String category = rs.getString("category");
+                String year = rs.getString("published_year");
+                boolean available = rs.getBoolean("is_available");
 
-                    String status = available ? "Available" : "Checked Out";
-                    books.add(author + "; " + title + "; " + isbn + "; " + category + "; " + year + "; " + status);
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                DBUtils.closeConnection(con, ps);
+                String status = available ? "Available" : "Checked Out";
+                Book bk = new Book(bookId, isbn, title, author, category, year, status);
+                allBooks.add(bk);
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            DBUtils.closeConnection(con, ps);
+        }
 
-            booksList.setItems(books);
+        booksList.setItems(allBooks);
     }
 
+    // Loan a book by entering the Book ID in the new bookIdInput field.
     @FXML
     protected void loanBook() {
-        String selectedBook = booksList.getSelectionModel().getSelectedItem();
-        if (selectedBook != null) {
-            String[] bookDetails = selectedBook.split(";");
-            String isbn = bookDetails[2].trim();
+        Book selectedBook = booksList.getSelectionModel().getSelectedItem();
+        if (selectedBook == null) {
+            showAlert("No Selection", "Please select a book to loan.");
+            return;
+        }
 
-            // Check if book is available
-            if (!isBookAvailable(isbn)) {
-                showAlert("Book Not Available", "This book is already checked out.");
+        // Check if the selected book is available
+        if (!isBookAvailable(selectedBook.getIsbn())) {
+            showAlert("Book Not Available", "This book is already checked out.");
+            return;
+        }
+
+        // Show loan dialog
+        Dialog<List<String>> dialog = createLoanDialog();
+        Optional<List<String>> result = dialog.showAndWait();
+
+        if (result.isPresent()) {
+            List<String> loanDetails = result.get();
+            String dueDate = loanDetails.get(3);
+
+            // Validate due date was entered
+            if (dueDate.isEmpty()) {
+                showAlert("Due Date Required", "Please enter a due date");
                 return;
             }
 
-            // Show loan dialog
-            Dialog<List<String>> dialog = createLoanDialog();
-            Optional<List<String>> result = dialog.showAndWait();
-
-            if (result.isPresent()) {
-                List<String> loanDetails = result.get();
-                String dueDate = loanDetails.get(3);
-
-                // Validate due date was entered
-                if (dueDate.isEmpty()) {
-                    showAlert("Due Date Required", "Please enter a due date");
-                    return;
-                }
-
-                // If using new member, validate name and phone
-                if (loanDetails.get(0).isEmpty() &&
-                        (loanDetails.get(1).isEmpty() || loanDetails.get(2).isEmpty())) {
-                    showAlert("Information Required", "For new members, please provide both name and phone number");
-                    return;
-                }
-
-                processLoan(isbn, loanDetails);
+            // If using new member, validate name and phone
+            if (loanDetails.get(0).isEmpty() &&
+                    (loanDetails.get(1).isEmpty() || loanDetails.get(2).isEmpty())) {
+                showAlert("Information Required", "For new members, please provide both name and phone number");
+                return;
             }
-        } else {
-            showAlert("No Selection", "Please select a book to loan.");
+
+            processLoan(selectedBook.getIsbn(), loanDetails);
         }
     }
 
-    // Create Dialog Box
+    // Create Dialog Box for loaning a book
     private Dialog<List<String>> createLoanDialog() {
         Dialog<List<String>> dialog = new Dialog<>();
         dialog.setTitle("Loan Book");
@@ -188,7 +220,7 @@ public class LibrarianStaffController {
         grid.add(dueDateField, 1, 6);
 
         dialog.getDialogPane().setContent(grid);
-        Platform.runLater(() -> memberIdField.requestFocus());
+        Platform.runLater(memberIdField::requestFocus);
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == loanButtonType) {
@@ -205,7 +237,7 @@ public class LibrarianStaffController {
         return dialog;
     }
 
-    // Checks if Book is available
+    // Checks if the book is available in the database using its ISBN
     private boolean isBookAvailable(String isbn) {
         Connection con = DBUtils.establishConnection();
         PreparedStatement ps = null;
@@ -226,7 +258,6 @@ public class LibrarianStaffController {
         } finally {
             DBUtils.closeConnection(con, ps);
         }
-
         return available;
     }
 
@@ -252,25 +283,21 @@ public class LibrarianStaffController {
 
         try {
             con.setAutoCommit(false);
-
             int memberId;
 
             if (!memberIdStr.isEmpty()) {
                 // If member exists
                 try {
                     memberId = Integer.parseInt(memberIdStr);
-
                     // Verify member exists
                     String memberQuery = "SELECT name FROM members WHERE member_id = ?";
                     ps = con.prepareStatement(memberQuery);
                     ps.setInt(1, memberId);
                     ResultSet rs = ps.executeQuery();
-
                     if (!rs.next()) {
                         showAlert("Member Not Found", "No member found with ID: " + memberId);
                         return;
                     }
-
                     memberName = rs.getString("name"); // Get name from DB
                 } catch (NumberFormatException e) {
                     showAlert("Invalid Member ID", "Member ID must be a number");
@@ -282,18 +309,14 @@ public class LibrarianStaffController {
                     showAlert("Name Required", "Please enter member name");
                     return;
                 }
-
                 if (!isValidMemberName(memberName)) {
-                    showAlert("Invalid Member Name",  "Please enter member name in 'Firstname Lastname' format, make sure first letter is capitalized");
+                    showAlert("Invalid Member Name", "Please enter member name in 'Firstname Lastname' format, make sure first letter is capitalized");
                     return;
                 }
-
                 if (!isValidPhoneNumber(phone)) {
-                    showAlert("Invalid Phone Number",
-                            "Phone number must be Qatari number (e.g., 55123456)");
+                    showAlert("Invalid Phone Number", "Phone number must be Qatari number (e.g., 55123456)");
                     return;
                 }
-
                 // Create new member
                 String insertQuery = "INSERT INTO members (name, phone) VALUES (?, ?)";
                 ps = con.prepareStatement(insertQuery, PreparedStatement.RETURN_GENERATED_KEYS);
@@ -305,7 +328,6 @@ public class LibrarianStaffController {
                 if (!rs.next()) {
                     throw new SQLException("Failed to create member");
                 }
-
                 memberId = rs.getInt(1);
             }
 
@@ -326,15 +348,11 @@ public class LibrarianStaffController {
 
             con.commit();
 
-            // Show success message
             Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
             successAlert.setTitle("Loan Successful");
             successAlert.setHeaderText("Book Checkout Completed");
             successAlert.setContentText(String.format(
-                    "Book successfully checked out to:\n" +
-                            "Member ID: %d\n" +
-                            "Name: %s\n" +
-                            "Due Date: %s",
+                    "Book successfully checked out to:\nMember ID: %d\nName: %s\nDue Date: %s",
                     memberId, memberName, dueDate
             ));
             successAlert.showAndWait();
@@ -346,7 +364,6 @@ public class LibrarianStaffController {
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
-
             String errorMessage = "Database error: " + e.getMessage();
             if (e.getSQLState() != null && e.getSQLState().equals("23000")) {
                 errorMessage = "This book is already checked out to another member. Or Failed to register new member";
@@ -362,57 +379,31 @@ public class LibrarianStaffController {
         }
     }
 
-    private int getOrCreateMember(Connection con, String name, String phone) throws SQLException {
-        // Check if member exists
-        String checkQuery = "SELECT member_id FROM members WHERE phone = ?";
-        PreparedStatement ps = con.prepareStatement(checkQuery);
-        ps.setString(1, phone);
-        ResultSet rs = ps.executeQuery();
-
-        if (rs.next()) {
-            return rs.getInt("member_id");
-        }
-
-        // Create new member if not exists
-        String insertQuery = "INSERT INTO members (name, phone) VALUES (?, ?)";
-        ps = con.prepareStatement(insertQuery, PreparedStatement.RETURN_GENERATED_KEYS);
-        ps.setString(1, name);
-        ps.setString(2, phone);
-        ps.executeUpdate();
-
-        rs = ps.getGeneratedKeys();
-        if (rs.next()) {
-            return rs.getInt(1);
-        }
-
-        throw new SQLException("Failed to create member");
-    }
-
+    // For returning a book, the librarian now enters the Book ID
     @FXML
     protected void returnBook() {
-        String selectedBook = booksList.getSelectionModel().getSelectedItem();
-        if (selectedBook != null) {
-            String[] bookDetails = selectedBook.split(";");
-            String isbn = bookDetails[2].trim();
-
-            // Check if book is actually checked out
-            if (isBookAvailable(isbn)) {
-                showAlert("Book Available", "This book is not currently checked out.");
-                return;
-            }
-
-            // Confirm return
-            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-            confirm.setTitle("Confirm Return");
-            confirm.setHeaderText("Confirm Book Return");
-            confirm.setContentText("Are you sure you want to return this book?");
-
-            Optional<ButtonType> result = confirm.showAndWait();
-            if (result.isPresent() && result.get() == ButtonType.OK) {
-                processReturn(isbn);
-            }
-        } else {
+        Book selectedBook = booksList.getSelectionModel().getSelectedItem();
+        if (selectedBook == null) {
             showAlert("No Selection", "Please select a book to return.");
+            return;
+        }
+        String isbn = selectedBook.getIsbn();
+
+        // Check if the book is actually checked out
+        if (isBookAvailable(isbn)) {
+            showAlert("Book Available", "This book is not currently checked out.");
+            return;
+        }
+
+        // Confirm return
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirm Return");
+        confirm.setHeaderText("Confirm Book Return");
+        confirm.setContentText("Are you sure you want to return this book?");
+
+        Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            processReturn(isbn);
         }
     }
 
@@ -465,7 +456,6 @@ public class LibrarianStaffController {
 
             con.commit();
 
-            // Show return confirmation with fine details
             showReturnConfirmation(memberName, isbn, dueDate, returnDate, fineAmount);
             loadBooks();
 
@@ -492,15 +482,11 @@ public class LibrarianStaffController {
         alert.setHeaderText("Book Returned Successfully");
 
         String fineMessage = fineAmount > 0 ?
-                String.format("Fine Amount: %.2f QR (%d days late)", fineAmount, (int)(returnDate.toEpochDay() - dueDate.toEpochDay())) :
+                String.format("Fine Amount: %.2f QR (%d days late)", fineAmount, (int) (returnDate.toEpochDay() - dueDate.toEpochDay())) :
                 "No fine applied (returned on time)";
 
         alert.setContentText(String.format(
-                "Book with ISBN %s has been returned.\n" +
-                        "Member: %s\n" +
-                        "Due Date: %s\n" +
-                        "Return Date: %s\n" +
-                        "%s",
+                "Book with ISBN %s has been returned.\nMember: %s\nDue Date: %s\nReturn Date: %s\n%s",
                 isbn, memberName, dueDate, returnDate, fineMessage
         ));
 
