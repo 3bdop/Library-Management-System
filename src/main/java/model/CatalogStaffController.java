@@ -181,6 +181,24 @@ public class CatalogStaffController {
             showAlert("Missing Information", "Please fill in all fields.");
             return;
         }
+        // Regex validations:
+        if (!isValidTitle(bookText)) {
+            showAlert("Invalid Title", "Title must contain only letters, numbers, and spaces.");
+            return;
+        }
+        if (!isValidAuthor(authorText)) {
+            showAlert("Invalid Author", "Author must contain only letters (no digits).");
+            return;
+        }
+        if (!isValidPublishedYear(yearText)) {
+            showAlert("Invalid Published Year", "Published Year must be exactly 4 digits.");
+            return;
+        }
+        if (!isValidCategory(categoryText)) {
+            showAlert("Invalid Category", "Category must contain only letters (no spaces).");
+            return;
+        }
+
         if (Integer.parseInt(yearText) > realYear ) {
             showAlert("Wrong Year", "Please enter a year before or equal to " + realYear);
             return;
@@ -259,6 +277,22 @@ public class CatalogStaffController {
         }
 
         booksList.setItems(allBooks);
+    }
+
+    private boolean isValidTitle(String title) {
+        return title.matches("^[A-Za-z0-9 ]+$");
+    }
+
+     private boolean isValidAuthor(String author) {
+        return author.matches("^[A-Za-z\\s]+$");
+    }
+
+    private boolean isValidPublishedYear(String year) {
+        return year.matches("^[0-9]{4}$");
+    }
+
+    private boolean isValidCategory(String category) {
+        return category.matches("^[A-Za-z]+$");
     }
 
     private void showAlert(String title, String message) {
