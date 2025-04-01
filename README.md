@@ -34,10 +34,11 @@ The Library Management System is intended for library staff and administrators t
 
 Follow these steps to get the project up and running:
 
-1. **Install SDKs:**
+1. **Prerequisites:**
      - Make sure you have JavaFX installed, if not [click here](https://gluonhq.com/products/javafx/).
      - Make sure you have Java MySQL Connecter installed, if not [click here](https://dev.mysql.com/downloads/connector/j/).
      - Make sure both SDKs are on the c:\ drive.
+     - Make sure you have XAMPP to have a SQL DB and Apache server, if not [click here](https://www.apachefriends.org/download.html).
        
 2. **Clone the repository:**
 
