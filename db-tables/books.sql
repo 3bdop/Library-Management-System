@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 27, 2025 at 11:03 AM
+-- Generation Time: Apr 02, 2025 at 12:35 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -33,7 +33,7 @@ CREATE TABLE `books` (
   `title` varchar(255) NOT NULL,
   `author` varchar(255) NOT NULL,
   `category` varchar(100) DEFAULT NULL,
-  `published_year` year(4) DEFAULT NULL,
+  `published_year` varchar(4) DEFAULT NULL,
   `is_available` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
