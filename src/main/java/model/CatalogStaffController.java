@@ -167,28 +167,44 @@ public class CatalogStaffController {
         }
     }
 
-
     @FXML
     protected void deleteBook() {
         Book selectedBook = booksList.getSelectionModel().getSelectedItem();
         if (selectedBook != null) {
-            String isbnToDelete = selectedBook.getIsbn();
+            // Show confirmation dialog before deleting
+            Alert confirmation = new Alert(AlertType.CONFIRMATION);
+            confirmation.setTitle("Confirm Deletion");
+            confirmation.setHeaderText("Delete Book");
+            confirmation.setContentText("Are you sure you want to delete the book:\n" + selectedBook.getTitle() + " by " + selectedBook.getAuthor() + "?");
+            // Wait for user response
+            ButtonType result = confirmation.showAndWait().orElse(ButtonType.CANCEL);
 
-            Connection con = DBUtils.establishConnection();
-            PreparedStatement ps = null;
-            try {
-                String query = "DELETE FROM books WHERE isbn=?";
-                ps = con.prepareStatement(query);
-                ps.setString(1, isbnToDelete);
-                ps.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                DBUtils.closeConnection(con, ps);
+            if (result == ButtonType.OK) {
+                String isbnToDelete = selectedBook.getIsbn();
+                Connection con = DBUtils.establishConnection();
+                PreparedStatement ps = null;
+                try {
+                    String query = "DELETE FROM books WHERE isbn=?";
+                    ps = con.prepareStatement(query);
+                    ps.setString(1, isbnToDelete);
+                    int rowsAffected = ps.executeUpdate();
+
+                    if (rowsAffected > 0) {
+                        // Show success message after deletion
+                        showAlert("Success",
+                                "Book '" + selectedBook.getTitle() + "' has been successfully deleted.",
+                                AlertType.INFORMATION);
+                    }
+                } catch (SQLException e) {
+                    showAlert("Database Error", "Failed to delete book: " + e.getMessage(), AlertType.ERROR);
+                    e.printStackTrace();
+                } finally {
+                    DBUtils.closeConnection(con, ps);
+                }
+
+                loadBooks();
+                search.setText("");
             }
-
-            loadBooks();
-            search.setText("");
         } else {
             showAlert("No Selection", "Please select a book to delete.", AlertType.ERROR);
         }
