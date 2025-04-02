@@ -108,15 +108,40 @@ public class CatalogStaffController {
         Book selectedBook = booksList.getSelectionModel().getSelectedItem();
         if (selectedBook != null) {
             // Open the update dialog, passing the selected Book for pre-population
-            // Assume UpdateBook now returns a Book object with updated details
             UpdateBook updateBook = new UpdateBook(selectedBook);
-            Book updatedBook = updateBook.showAndWait(); // You must implement this so that it returns a Book
+            Book updatedBook = updateBook.showAndWait();  // Must implement this so that it returns a Book
 
             if (updatedBook != null) {
+                // Validate all fields before updating
+                if (!isValidAuthor(updatedBook.getAuthor())) {
+                    showAlert("Invalid Author", "Please enter a valid Author name.", AlertType.ERROR);
+                    return;
+                }
+
+                if (!isValidTitle(updatedBook.getTitle())) {
+                    showAlert("Invalid Title", "Please enter a valid Book Title.", AlertType.ERROR);
+                    return;
+                }
+
+                if (!isValidISBN(updatedBook.getIsbn())) {
+                    showAlert("Invalid ISBN", "Please enter a valid ISBN.", AlertType.ERROR);
+                    return;
+                }
+
+                if (!isValidCategory(updatedBook.getCategory())) {
+                    showAlert("Invalid Category", "Please enter a valid Category.", AlertType.ERROR);
+                    return;
+                }
+
+                if (!isValidPublishedYear(updatedBook.getPublishedYear())) {
+                    showAlert("Invalid Year", "Please enter a valid year.", AlertType.ERROR);
+                    return;
+                }
+
                 Connection con = DBUtils.establishConnection();
                 PreparedStatement ps = null;
                 try {
-                    // Use book_id in the WHERE clause, since ISBN might be updated
+                    // Used book_id in the WHERE clause, since ISBN might be updated
                     String query = "UPDATE books SET author=?, title=?, isbn=?, category=?, published_year=? WHERE book_id=?";
                     ps = con.prepareStatement(query);
                     ps.setString(1, updatedBook.getAuthor());
@@ -126,7 +151,10 @@ public class CatalogStaffController {
                     ps.setString(5, updatedBook.getPublishedYear());
                     ps.setInt(6, selectedBook.getBookId());
                     ps.executeUpdate();
+
+                    showAlert("Success", "Book updated successfully!", AlertType.INFORMATION);
                 } catch (SQLException e) {
+                    showAlert("Database Error", "Failed to update book: " + e.getMessage(), AlertType.ERROR);
                     e.printStackTrace();
                 } finally {
                     DBUtils.closeConnection(con, ps);
@@ -135,7 +163,7 @@ public class CatalogStaffController {
                 search.setText("");
             }
         } else {
-            showAlert("No Selection", "Please select a book to edit.");
+            showAlert("No Selection", "Please select a book to edit.", AlertType.ERROR);
         }
     }
 
@@ -162,52 +190,70 @@ public class CatalogStaffController {
             loadBooks();
             search.setText("");
         } else {
-            showAlert("No Selection", "Please select a book to delete.");
+            showAlert("No Selection", "Please select a book to delete.", AlertType.ERROR);
         }
     }
 
     @FXML
     protected void addItem() {
-        String authorText = author.getText();
-        String bookText = book.getText();
-        String isbnText = isbn.getText();
-        String categoryText = category.getText();
-        String yearText = year.getText();
+        String authorText = author.getText().trim();
+        String bookText = book.getText().trim();
+        String isbnText = isbn.getText().trim();
+        String categoryText = category.getText().trim();
+        String yearText = year.getText().trim();
 
-        Calendar now = Calendar.getInstance();
-        int realYear = now.get(Calendar.YEAR);
-
-        if (authorText.isEmpty() || bookText.isEmpty() || isbnText.isEmpty() || categoryText.isEmpty() || yearText.isEmpty()) {
-            showAlert("Missing Information", "Please fill in all fields.");
+        // Validate all fields
+        if (authorText.isEmpty() || bookText.isEmpty() || isbnText.isEmpty() ||
+                categoryText.isEmpty() || yearText.isEmpty()) {
+            showAlert("Missing Information", "Please fill in all fields.", AlertType.ERROR);
             return;
         }
-        // Regex validations:
-        if (!isValidTitle(bookText)) {
-            showAlert("Invalid Title", "Title must contain only letters, numbers, and spaces.");
-            return;
-        }
+
         if (!isValidAuthor(authorText)) {
-            showAlert("Invalid Author", "Author must contain only letters (no digits).");
+            showAlert("Invalid Author","Please enter a valid Author name.", AlertType.ERROR);
             return;
         }
-        if (!isValidPublishedYear(yearText)) {
-            showAlert("Invalid Published Year", "Published Year must be exactly 4 digits.");
+
+        if (!isValidTitle(bookText)) {
+            showAlert("Invalid Title","Please enter a valid Book Title.", AlertType.ERROR);
             return;
         }
+
+        if (!isValidISBN(isbnText)) {
+            showAlert("Invalid ISBN","Please enter a valid ISBN.", AlertType.ERROR);
+            return;
+        }
+
         if (!isValidCategory(categoryText)) {
-            showAlert("Invalid Category", "Category must contain only letters (no spaces).");
+            showAlert("Invalid Category","Please enter a valid Category.", AlertType.ERROR);
             return;
         }
 
-        if (Integer.parseInt(yearText) > realYear ) {
-            showAlert("Wrong Year", "Please enter a year before or equal to " + realYear);
+        if (!isValidPublishedYear(yearText)) {
+            showAlert("Invalid Year","Please enter a valid year.", AlertType.ERROR);
             return;
         }
 
-        Connection con = DBUtils.establishConnection();
+        Connection con = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
+
         try {
+            con = DBUtils.establishConnection();
+
+            // Check if ISBN already exists
+            String checkQuery = "SELECT isbn FROM books WHERE isbn = ?";
+            ps = con.prepareStatement(checkQuery);
+            ps.setString(1, isbnText);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                showAlert("Duplicate ISBN", "A book with this ISBN already exists.", AlertType.ERROR);
+                return;
+            }
+            rs.close();
+            ps.close();
+
             // Get the last book_id from the books table
             String getLastID = "SELECT book_id FROM books ORDER BY book_id DESC LIMIT 1";
             ps = con.prepareStatement(getLastID);
@@ -219,7 +265,7 @@ public class CatalogStaffController {
             rs.close();
             ps.close();
 
-            // Insert the new book with the calculated book_id
+            // Insert the new book
             String query = "INSERT INTO books (book_id, author, title, isbn, category, published_year) VALUES (?, ?, ?, ?, ?, ?)";
             ps = con.prepareStatement(query);
             ps.setInt(1, newBookId);
@@ -229,21 +275,22 @@ public class CatalogStaffController {
             ps.setString(5, categoryText);
             ps.setString(6, yearText);
             ps.executeUpdate();
+
+            // Clear the text fields
+            author.setText("");
+            book.setText("");
+            isbn.setText("");
+            category.setText("");
+            year.setText("");
+
+            showAlert("Success", "Book added successfully!", AlertType.INFORMATION);
         } catch (SQLException e) {
-            e.printStackTrace();
+            showAlert("Database Error", "Failed to add book: " + e.getMessage(), AlertType.ERROR);
         } finally {
             DBUtils.closeConnection(con, ps);
+            // Reload the books to update the TableView
+            loadBooks();
         }
-
-        // Clear the text fields
-        author.setText("");
-        book.setText("");
-        isbn.setText("");
-        category.setText("");
-        year.setText("");
-
-        // Reload the books to update the TableView
-        loadBooks();
     }
 
     private void loadBooks() {
@@ -279,12 +326,16 @@ public class CatalogStaffController {
         booksList.setItems(allBooks);
     }
 
+    private boolean isValidISBN(String isbn) {
+        return isbn.matches("^(978|979)\\d{10}$");
+    }
+
     private boolean isValidTitle(String title) {
-        return title.matches("^[A-Za-z0-9 ]+$");
+        return title.matches("^[A-Za-z0-9]+([A-Za-z0-9'’\"“”‘`.,;:!?()\\- ]*[A-Za-z0-9])?$") && title.length() < 255;
     }
 
      private boolean isValidAuthor(String author) {
-        return author.matches("^[A-Za-z\\s]+$");
+        return author.matches("^([A-Za-z.'’]{2,}+)( [A-Za-z.'’]{2,}+)+(, ?[A-Za-z.'’]{2,}+( [A-Za-z.'’]{2,}+)+)*$") && author.length() < 255;
     }
 
     private boolean isValidPublishedYear(String year) {
@@ -292,11 +343,11 @@ public class CatalogStaffController {
     }
 
     private boolean isValidCategory(String category) {
-        return category.matches("^[A-Za-z]+$");
+        return category.matches("^([A-Za-z]{2,})( [A-Za-z]{2,})*$") && category.length() < 100;
     }
 
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(AlertType.ERROR);
+    private void showAlert(String title, String message, AlertType type) {
+        Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
