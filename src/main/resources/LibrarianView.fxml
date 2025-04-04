@@ -15,7 +15,7 @@
                 <Font name="System Bold" size="21.0" />
             </font>
         </Text>
-        <TextField fx:id="search" layoutX="174.0" layoutY="128.0" onKeyTyped="#searchBook" prefHeight="31.0" prefWidth="451.0" promptText="Search.Search by (title, isbn, author, category, year)" />
+        <TextField fx:id="search" layoutX="174.0" layoutY="128.0" onKeyTyped="#searchBook" prefHeight="31.0" prefWidth="451.0" promptText="Search by (title, isbn, author, category, year)" />
         <Button fx:id="logout" layoutX="866.0" layoutY="551.0" mnemonicParsing="false" prefHeight="30.0" prefWidth="80.0" style="-fx-background-color: #0598ff; -fx-font-weight: bold;" text="Log Out" textFill="WHITE" />
       <Button fx:id="loan" layoutX="640.0" layoutY="128.0" mnemonicParsing="false" onAction="#loanBook" prefHeight="30.0" prefWidth="80.0" style="-fx-background-color: #0598ff; -fx-font-weight: bold;" text="Loan" textFill="WHITE" />
       <Button fx:id="return" layoutX="730.0" layoutY="128.0" mnemonicParsing="false" onAction="#returnBook" prefHeight="30.0" prefWidth="80.0" style="-fx-background-color: #0598ff; -fx-font-weight: bold;" text="Return" textFill="WHITE" />
