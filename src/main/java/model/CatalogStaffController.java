@@ -351,7 +351,7 @@ public class CatalogStaffController {
     }
 
      private boolean isValidAuthor(String author) {
-        return author.matches("^[A-Za-z.'’]{2,},( [A-Za-z.'’]{2,})$") && author.length() < 255;
+        return author.matches("^([A-Za-z.'’]{2,}( [A-Za-z.'’]{2,})?)(, [A-Za-z.'’]{2,}( [A-Za-z.'’]{2,})?)*$") && author.length() < 255;
     }
 
     private boolean isValidPublishedYear(String year) {
