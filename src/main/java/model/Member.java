@@ -3,14 +3,12 @@ package main.java.model;
 public class Member {
         private int memberId;
         private String name;
-        private String email;
         private String phone;
         private String registrationDate;
 
-    public Member(int memberId, String name, String email, String phone, String registrationDate) {
+    public Member(int memberId, String name, String phone, String registrationDate) {
         this.memberId = memberId;
         this.name = name;
-        this.email = email;
         this.phone = phone;
         this.registrationDate = registrationDate;
     }
@@ -29,14 +27,6 @@ public class Member {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public String getPhone() {
