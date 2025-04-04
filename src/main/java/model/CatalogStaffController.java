@@ -124,7 +124,7 @@ public class CatalogStaffController {
                 }
 
                 if (!isValidISBN(updatedBook.getIsbn())) {
-                    showAlert("Invalid ISBN", "Please enter a valid ISBN.", AlertType.ERROR);
+                    showAlert("Invalid ISBN","Please enter a valid ISBN. ISBN starts with 978 or 979 followed by 10 digits", AlertType.ERROR);
                     return;
                 }
 
@@ -236,7 +236,7 @@ public class CatalogStaffController {
         }
 
         if (!isValidISBN(isbnText)) {
-            showAlert("Invalid ISBN","Please enter a valid ISBN.", AlertType.ERROR);
+            showAlert("Invalid ISBN","Please enter a valid ISBN. ISBN starts with 978 or 979 followed by 10 digits", AlertType.ERROR);
             return;
         }
 
@@ -347,11 +347,11 @@ public class CatalogStaffController {
     }
 
     private boolean isValidTitle(String title) {
-        return title.matches("^[A-Za-z0-9]+([A-Za-z0-9'’\"“”‘`.,;:!?()\\- ]*[A-Za-z0-9])?$") && title.length() < 255;
+        return title.matches("^[A-Za-z0-9 .,'\"!?()-]{1,254}[A-Za-z0-9]$") && title.length() < 255;
     }
 
      private boolean isValidAuthor(String author) {
-        return author.matches("^([A-Za-z.'’]{2,}+)( [A-Za-z.'’]{2,}+)+(, ?[A-Za-z.'’]{2,}+( [A-Za-z.'’]{2,}+)+)*$") && author.length() < 255;
+        return author.matches("^[A-Za-z.'’]{2,},( [A-Za-z.'’]{2,})$") && author.length() < 255;
     }
 
     private boolean isValidPublishedYear(String year) {
@@ -359,7 +359,7 @@ public class CatalogStaffController {
     }
 
     private boolean isValidCategory(String category) {
-        return category.matches("^([A-Za-z]{2,})( [A-Za-z]{2,})*$") && category.length() < 100;
+        return category.matches("^[A-Za-z ]{2,100}$") && category.length() < 100;
     }
 
     private void showAlert(String title, String message, AlertType type) {
