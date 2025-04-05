@@ -332,8 +332,7 @@ public class LibrarianStaffController {
             }
 
             // Process the loan
-            String loanQuery = "INSERT INTO loans (isbn, member_id, loan_date, due_date, fine_per_day) " +
-                    "VALUES (?, ?, CURDATE(), ?, 5.00)";
+            String loanQuery = "INSERT INTO loans (isbn, member_id, loan_date, due_date, fine_per_day) VALUES (?, ?, CURDATE(), ?, 5.00)";
             ps = con.prepareStatement(loanQuery);
             ps.setString(1, isbn);
             ps.setInt(2, memberId);
