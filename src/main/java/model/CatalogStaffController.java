@@ -25,6 +25,7 @@ public class CatalogStaffController {
 
     private Stage stage; // Declare the stage variable
 
+    // TableView and its columns
     @FXML private TableView<Book> booksList;
     @FXML private TableColumn<Book, Integer> bookIdColumn;
     @FXML private TableColumn<Book, String> isbnColumn;
@@ -34,6 +35,7 @@ public class CatalogStaffController {
     @FXML private TableColumn<Book, String> yearColumn;
     @FXML private TableColumn<Book, String> availabilityColumn;
 
+    // Other controls
     @FXML private TextField author;
     @FXML private TextField book;
     @FXML private TextField isbn;
@@ -42,6 +44,7 @@ public class CatalogStaffController {
     @FXML private TextField search;
     @FXML private Button logout;
 
+    // Store all books for filtering/searching
     private ObservableList<Book> allBooks = FXCollections.observableArrayList();
 
     // Constructor that accepts a Stage parameter
@@ -80,11 +83,15 @@ public class CatalogStaffController {
         loadBooks();
     }
 
+    // Filters and displays books in the TableView based on a search query.
     @FXML
     protected void searchBook() {
+        // Get trimmed and lowercased search text from the input field
         String searchText = search.getText().strip().toLowerCase();
+        // Proceed only if the user has entered 3 or more
         if (searchText.length() >= 3) {
             ObservableList<Book> filteredBooks = FXCollections.observableArrayList();
+            // Loop will go through all books and add matches to the filtered list
             for (Book bk : allBooks) {
                 if (
                         bk.getTitle().toLowerCase().contains(searchText) ||
@@ -96,9 +103,9 @@ public class CatalogStaffController {
                     filteredBooks.add(bk);
                 }
             }
-            booksList.setItems(filteredBooks);
+            booksList.setItems(filteredBooks); // Display the filtered results in the TableView
         } else {
-            booksList.setItems(allBooks);
+            booksList.setItems(allBooks); // If search text is too short, show the full list of books
         }
     }
 
@@ -211,7 +218,7 @@ public class CatalogStaffController {
     }
 
     @FXML
-    protected void addItem() {
+    protected void addBook() {
         String authorText = author.getText().trim();
         String bookText = book.getText().trim();
         String isbnText = isbn.getText().trim();
@@ -309,17 +316,20 @@ public class CatalogStaffController {
         }
     }
 
+    // Loads all books from the database and populates the TableView.
     private void loadBooks() {
-        allBooks.clear();
+        allBooks.clear(); // Clear existing book entries before reloading
         Connection con = DBUtils.establishConnection();
         PreparedStatement ps = null;
         ResultSet rs = null;
 
         try {
+            // Query to retrieve all books from the database
             String query = "SELECT * FROM books";
             ps = con.prepareStatement(query);
             rs = ps.executeQuery();
 
+            // Process each record from the result set
             while (rs.next()) {
                 int bookId = rs.getInt("book_id");
                 String isbn = rs.getString("isbn");
@@ -329,9 +339,10 @@ public class CatalogStaffController {
                 String year = rs.getString("published_year");
                 boolean available = rs.getBoolean("is_available");
 
+                // Set the status of the book: "Available" if true, otherwise "Checked Out"
                 String status = available ? "Available" : "Checked Out";
                 Book bk = new Book(bookId, isbn, title, author, category, year, status);
-                allBooks.add(bk);
+                allBooks.add(bk); // Create Book object and add it to the list
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -339,9 +350,10 @@ public class CatalogStaffController {
             DBUtils.closeConnection(con, ps);
         }
 
-        booksList.setItems(allBooks);
+        booksList.setItems(allBooks); // Set the TableView to display the updated list of books
     }
 
+    // Input Validation methods using regular expressions
     private boolean isValidISBN(String isbn) {
         return isbn.matches("^(978|979)\\d{10}$");
     }
@@ -362,6 +374,7 @@ public class CatalogStaffController {
         return category.matches("^[A-Za-z ]{2,100}$") && category.length() < 100;
     }
 
+    //Show alerts
     private void showAlert(String title, String message, AlertType type) {
         Alert alert = new Alert(type);
         alert.setTitle(title);

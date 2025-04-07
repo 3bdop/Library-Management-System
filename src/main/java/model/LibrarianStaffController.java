@@ -55,11 +55,15 @@ public class LibrarianStaffController {
         loadView(); // Load the view after initializing the stage
     }
 
+    // Filters and displays books in the TableView based on a search query.
     @FXML
     protected void searchBook() {
+        // Get trimmed and lowercased search text from the input field
         String searchText = search.getText().strip().toLowerCase();
+        // Proceed only if the user has entered 3 or more
         if (searchText.length() >= 3) {
             ObservableList<Book> filteredBooks = FXCollections.observableArrayList();
+            // Loop will go through all books and add matches to the filtered list
             for (Book bk : allBooks) {
                 if (bk.getTitle().toLowerCase().contains(searchText) ||
                         bk.getAuthor().toLowerCase().contains(searchText) ||
@@ -70,9 +74,9 @@ public class LibrarianStaffController {
                     filteredBooks.add(bk);
                 }
             }
-            booksList.setItems(filteredBooks);
+            booksList.setItems(filteredBooks); // Display the filtered results in the TableView
         } else {
-            booksList.setItems(allBooks);
+            booksList.setItems(allBooks); // If search text is too short, show the full list of books
         }
     }
 
@@ -107,18 +111,20 @@ public class LibrarianStaffController {
         loadBooks();
     }
 
-    // Updated loadBooks to load Book objects rather than Strings
+    // Loads all books from the database and populates the TableView.
     private void loadBooks() {
-        allBooks.clear();
+        allBooks.clear(); // Clear existing book entries before reloading
         Connection con = DBUtils.establishConnection();
         PreparedStatement ps = null;
         ResultSet rs = null;
 
         try {
+            // Query to retrieve all books from the database
             String query = "SELECT * FROM books";
             ps = con.prepareStatement(query);
             rs = ps.executeQuery();
 
+            // Process each record from the result set
             while (rs.next()) {
                 int bookId = rs.getInt("book_id");
                 String isbn = rs.getString("isbn");
@@ -128,9 +134,10 @@ public class LibrarianStaffController {
                 String year = rs.getString("published_year");
                 boolean available = rs.getBoolean("is_available");
 
+                // Set the status of the book: "Available" if true, otherwise "Checked Out"
                 String status = available ? "Available" : "Checked Out";
                 Book bk = new Book(bookId, isbn, title, author, category, year, status);
-                allBooks.add(bk);
+                allBooks.add(bk); // Create Book object and add it to the list
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -138,17 +145,18 @@ public class LibrarianStaffController {
             DBUtils.closeConnection(con, ps);
         }
 
-        booksList.setItems(allBooks);
+        booksList.setItems(allBooks); // Set the TableView to display the updated list of books
     }
 
-    // Loan a book by entering the Book ID in the new bookIdInput field.
+    //Handles the book loan process initiated by the librarian. Then Calls processLoan() to complete the loan operation.
     @FXML
     protected void loanBook() {
+        // Get the selected book from the TableView
         Book selectedBook = booksList.getSelectionModel().getSelectedItem();
         if (selectedBook == null) {
             showAlert("No Selection", "Please select a book to loan.");
             return;
-        }
+        } // Ensure a book is selected
 
         // Check if the selected book is available
         if (!isBookAvailable(selectedBook.getIsbn())) {
@@ -156,10 +164,11 @@ public class LibrarianStaffController {
             return;
         }
 
-        // Show loan dialog
+        // Show loan dialog to collect loan details
         Dialog<List<String>> dialog = createLoanDialog();
         Optional<List<String>> result = dialog.showAndWait();
 
+        // Process the loan details if user submits the dialog
         if (result.isPresent()) {
             List<String> loanDetails = result.get();
             String dueDate = loanDetails.get(3);
@@ -170,14 +179,14 @@ public class LibrarianStaffController {
                 return;
             }
 
-            // If using new member, validate name and phone
+            // If its a new member, validate name and phone
             if (loanDetails.get(0).isEmpty() &&
                     (loanDetails.get(1).isEmpty() || loanDetails.get(2).isEmpty())) {
                 showAlert("Information Required", "For new members, please provide both name and phone number");
                 return;
             }
 
-            processLoan(selectedBook.getIsbn(), loanDetails);
+            processLoan(selectedBook.getIsbn(), loanDetails); // Call method to finalize and store the loan in the system
         }
     }
 
@@ -222,6 +231,7 @@ public class LibrarianStaffController {
         dialog.getDialogPane().setContent(grid);
         Platform.runLater(memberIdField::requestFocus);
 
+        // Convert the result to a list of strings when the "Loan" button is clicked
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == loanButtonType) {
                 return Arrays.asList(
@@ -242,14 +252,16 @@ public class LibrarianStaffController {
         Connection con = DBUtils.establishConnection();
         PreparedStatement ps = null;
         ResultSet rs = null;
-        boolean available = false;
+        boolean available = false; // Default to false
 
         try {
+            // SQL query to check the availability of the book
             String query = "SELECT is_available FROM books WHERE isbn = ?";
             ps = con.prepareStatement(query);
             ps.setString(1, isbn);
             rs = ps.executeQuery();
 
+            // If the book is found, retrieve its availability status
             if (rs.next()) {
                 available = rs.getBoolean("is_available");
             }
@@ -258,9 +270,10 @@ public class LibrarianStaffController {
         } finally {
             DBUtils.closeConnection(con, ps);
         }
-        return available;
+        return available; // Return true if available, false otherwise
     }
 
+    // Handles the full book loan process including member validation/creation, loan recording, and book status update
     private void processLoan(String isbn, List<String> loanDetails) {
         String memberIdStr = loanDetails.get(0);
         String memberName = loanDetails.get(1);
@@ -285,8 +298,8 @@ public class LibrarianStaffController {
             con.setAutoCommit(false);
             int memberId;
 
+            // If member exists (ID provided)
             if (!memberIdStr.isEmpty()) {
-                // If member exists
                 try {
                     memberId = Integer.parseInt(memberIdStr);
                     // Verify member exists
@@ -304,7 +317,8 @@ public class LibrarianStaffController {
                     return;
                 }
             } else {
-                // If new member
+                // If new member (ID not provided)
+                // Validate new member details
                 if (memberName.isEmpty()) {
                     showAlert("Name Required", "Please enter member name");
                     return;
@@ -317,21 +331,21 @@ public class LibrarianStaffController {
                     showAlert("Invalid Phone Number", "Phone number must be Qatari number (e.g., 55123456)");
                     return;
                 }
-                // Create new member
+                // Create new member into db
                 String insertQuery = "INSERT INTO members (name, phone) VALUES (?, ?)";
                 ps = con.prepareStatement(insertQuery, PreparedStatement.RETURN_GENERATED_KEYS);
                 ps.setString(1, memberName);
                 ps.setString(2, phone);
                 ps.executeUpdate();
 
-                ResultSet rs = ps.getGeneratedKeys();
+                ResultSet rs = ps.getGeneratedKeys(); // Retrieve the new member ID
                 if (!rs.next()) {
                     throw new SQLException("Failed to create member");
                 }
                 memberId = rs.getInt(1);
             }
 
-            // Process the loan
+            // Insert loan record into the loans table
             String loanQuery = "INSERT INTO loans (isbn, member_id, loan_date, due_date, fine_per_day) VALUES (?, ?, CURDATE(), ?, 5.00)";
             ps = con.prepareStatement(loanQuery);
             ps.setString(1, isbn);
@@ -345,8 +359,9 @@ public class LibrarianStaffController {
             ps.setString(1, isbn);
             ps.executeUpdate();
 
-            con.commit();
+            con.commit(); // Commit the transaction
 
+            // Show confirmation dialog
             Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
             successAlert.setTitle("Loan Successful");
             successAlert.setHeaderText("Book Checkout Completed");
@@ -356,7 +371,8 @@ public class LibrarianStaffController {
             ));
             successAlert.showAndWait();
 
-            loadBooks();
+            loadBooks(); // Refresh the book list
+
         } catch (SQLException e) {
             try {
                 con.rollback();
@@ -378,7 +394,7 @@ public class LibrarianStaffController {
         }
     }
 
-    // For returning a book, the librarian now enters the Book ID
+    // Handles the process of returning a book. Then Calls processReturn() to complete the return operation.
     @FXML
     protected void returnBook() {
         Book selectedBook = booksList.getSelectionModel().getSelectedItem();
@@ -394,18 +410,20 @@ public class LibrarianStaffController {
             return;
         }
 
-        // Confirm return
+        // Ask the user to Confirm return
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Confirm Return");
         confirm.setHeaderText("Confirm Book Return");
         confirm.setContentText("Are you sure you want to return this book?");
 
+        // Process the return if the user clicks OK
         Optional<ButtonType> result = confirm.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             processReturn(isbn);
         }
     }
 
+    // Handles the full book return process including calculating fines, updating loan record and book availability
     private void processReturn(String isbn) {
         Connection con = DBUtils.establishConnection();
         PreparedStatement ps = null;
@@ -419,12 +437,13 @@ public class LibrarianStaffController {
             ps = con.prepareStatement(getLoanQuery);
             ps.setString(1, isbn);
             rs = ps.executeQuery();
-
+            // If no active loan found, show error and return
             if (!rs.next()) {
                 showAlert("Error", "No active loan found for this book.");
                 return;
             }
 
+            // Extract loan details from the result set
             int loanId = rs.getInt("loan_id");
             int memberId = rs.getInt("member_id");
             LocalDate dueDate = rs.getDate("due_date").toLocalDate();
@@ -434,7 +453,7 @@ public class LibrarianStaffController {
             int daysLate = (int) Math.max(0, returnDate.toEpochDay() - dueDate.toEpochDay());
             double fineAmount = daysLate * 5.0;
 
-            // Update loan record
+            // Update loan record as returned in the database
             String updateLoanQuery = "UPDATE loans SET returned = 1, return_date = CURDATE() WHERE loan_id = ?";
             ps = con.prepareStatement(updateLoanQuery);
             ps.setInt(1, loanId);
@@ -446,17 +465,18 @@ public class LibrarianStaffController {
             ps.setString(1, isbn);
             ps.executeUpdate();
 
-            // Get member details for the alert message
+            // Get member details for the confirmation message
             String memberQuery = "SELECT name FROM members WHERE member_id = ?";
             ps = con.prepareStatement(memberQuery);
             ps.setInt(1, memberId);
             rs = ps.executeQuery();
             String memberName = rs.next() ? rs.getString("name") : "Unknown Member";
 
-            con.commit();
+            con.commit(); // Commit the transaction if all operations succeeded
 
+            // Show confirmation dialog with return details
             showReturnConfirmation(memberName, isbn, dueDate, returnDate, fineAmount);
-            loadBooks();
+            loadBooks(); // Refresh the book list
 
         } catch (SQLException e) {
             try {
@@ -475,6 +495,7 @@ public class LibrarianStaffController {
         }
     }
 
+    // Confirmation Message after successful Book return
     private void showReturnConfirmation(String memberName, String isbn, LocalDate dueDate, LocalDate returnDate, double fineAmount) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Return Processed");
@@ -494,20 +515,22 @@ public class LibrarianStaffController {
 
     // Input Validation methods using regular expressions
     private boolean isValidDate(String dateStr) {
-        String dateRegex = "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$";
+        String dateRegex = "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"; //format (YYYY-MM-DD)
         return dateStr.matches(dateRegex);
     }
 
     private boolean isValidMemberName(String name) {
+        //First letter uppercase, there must be at least two words
         String nameRegex = "^[A-Z][a-z]+(\\s[A-Z][a-z]+)+$";
         return name.matches(nameRegex);
     }
 
     private boolean isValidPhoneNumber(String phone) {
-        String phoneRegex = "^[1-9]\\d{7}$";
+        String phoneRegex = "^[1-9]\\d{7}$"; //8-digit Qatari Phone number
         return phone.matches(phoneRegex);
     }
 
+    //Show error alerts
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
