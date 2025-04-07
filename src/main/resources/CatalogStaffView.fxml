@@ -19,7 +19,7 @@
         <TextField fx:id="book" layoutX="30.0" layoutY="143.0" prefHeight="40.0" prefWidth="190.0" promptText="Book Title (e.g. Evil Twin)" />
         <TextField fx:id="isbn" layoutX="30.0" layoutY="191.0" prefHeight="40.0" prefWidth="190.0" promptText="ISBN (e.g. 9781234567890)" />
         <TextField fx:id="category" layoutX="30.0" layoutY="239.0" prefHeight="40.0" prefWidth="190.0" promptText="Category (e.g Tech)" />
-        <Button layoutX="65.0" layoutY="345.0" mnemonicParsing="false" onAction="#addItem" prefHeight="40.0" prefWidth="120.0" style="-fx-background-color: #0598ff; -fx-font-weight: bold;" text="Add book" textFill="WHITE" />
+        <Button layoutX="65.0" layoutY="345.0" mnemonicParsing="false" onAction="#addBook" prefHeight="40.0" prefWidth="120.0" style="-fx-background-color: #0598ff; -fx-font-weight: bold;" text="Add book" textFill="WHITE" />
         <TextField fx:id="search" layoutX="359.0" layoutY="50.0" onKeyTyped="#searchBook" prefHeight="31.0" prefWidth="451.0" promptText="Search by (title, isbn, author, category, year)" />
         <Button fx:id="edit" layoutX="821.0" layoutY="53.0" mnemonicParsing="false" onAction="#editBook" prefHeight="25.0" prefWidth="50.0" style="-fx-background-color: #0598ff; -fx-font-weight: bold;" text="Edit" textFill="WHITE" />
         <Button fx:id="delete" layoutX="896.0" layoutY="53.0" mnemonicParsing="false" onAction="#deleteBook" prefHeight="25.0" prefWidth="55.0" style="-fx-background-color: #0598ff; -fx-font-weight: bold;" text="Delete" textFill="WHITE" />
