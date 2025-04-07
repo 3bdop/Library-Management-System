@@ -61,4 +61,14 @@ Follow these steps to get the project up and running:
        --add-exports=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED
        ```
        > **_Note:_** If your JavaFX lib path is not in c:\\ then change ```--module-path <javafx\lib path>```
+       
+4. **Setup Database:**
+    - Create a new database called "dacsproject"
+    - Add the tables from ```db-tables```
+    - Adding tables must be with the following order:
+        - users
+        - books
+        - members
+        - loans
+    
    
