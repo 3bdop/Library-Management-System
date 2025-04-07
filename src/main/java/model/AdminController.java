@@ -28,6 +28,7 @@ public class AdminController {
     @FXML private ComboBox<String> newRole;
     @FXML private Text userWelcome;
     @FXML private Button logout;
+    @FXML private Button deleteBtn;
     @FXML private ListView<String> listUsers;
 
     String algorithm = "SHA-256";
@@ -54,6 +55,7 @@ public class AdminController {
 
             createBtn.setOnAction(e->handleNewUser());
             logout.setOnAction(e->handleLogout());
+            deleteBtn.setOnAction(e->handleDeleteUser());
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -139,6 +141,50 @@ public class AdminController {
         newPass.clear();
         newRole.getSelectionModel().clearSelection();
     }
+
+    @FXML
+    private void handleDeleteUser() {
+        // Retrieve the selected item from the list
+        String selectedItem = listUsers.getSelectionModel().getSelectedItem();
+        if (selectedItem == null) {
+            showAlert(Alert.AlertType.ERROR, "Selection Error", "No user selected.");
+            return;
+        }
+
+        // Assuming the item format is "username - role"
+        String[] parts = selectedItem.split(" - ");
+        if (parts.length < 2) {
+            showAlert(Alert.AlertType.ERROR, "Format Error", "Invalid user selection.");
+            return;
+        }
+        String selectedUsername = parts[0].trim();
+        String selectedRole = parts[1].trim();
+
+        // Validate that the selected user is not an admin
+        if (selectedRole.equalsIgnoreCase("admin")) {
+            showAlert(Alert.AlertType.ERROR, "Deletion Error", "Admin users cannot be deleted.");
+            return;
+        }
+
+        // Proceed to delete the user from the database
+        String deleteQuery = "DELETE FROM users WHERE username = ?";
+        try (Connection conn = DBUtils.establishConnection();
+             PreparedStatement stmt = conn.prepareStatement(deleteQuery)) {
+            stmt.setString(1, selectedUsername);
+            int rowsDeleted = stmt.executeUpdate();
+            if (rowsDeleted > 0) {
+                showAlert(Alert.AlertType.INFORMATION, "Success", "User deleted successfully.");
+                // Refresh the list view
+                handleShowUsers();
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Deletion Error", "User deletion failed.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to delete user.");
+        }
+    }
+
 
     @FXML
     private void handleShowUsers() {
