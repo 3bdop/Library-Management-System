@@ -82,6 +82,26 @@ public class AdminController {
             return;
         }
 
+        if(!isValidUsername(username)){
+            showAlert(Alert.AlertType.ERROR,"Invalid Username", "Usernames must be all lowercase and characters between 3 and 7");
+            return;
+        }
+
+        String checkUsername = "SELECT username FROM users where username=?";
+        try(
+        Connection conn = DBUtils.establishConnection();
+        PreparedStatement ps = conn.prepareStatement(checkUsername)){
+            ps.setString(1, username);
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()){
+                showAlert(Alert.AlertType.ERROR, "Invalid Username", "Username already exists, must be unique user.");
+                return;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to create user.");
+        }
+
         String insertQuery = "INSERT INTO users (username, password, salt, role) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = DBUtils.establishConnection();
@@ -169,6 +189,10 @@ public class AdminController {
         return bytes;
     }
 
+
+    private boolean isValidUsername(String username) {
+        return username.matches("^[a-z ]{3,7}$") && username.length() < 8;
+    }
 
     @FXML
     private void handleLogout() {
