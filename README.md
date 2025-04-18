@@ -65,7 +65,7 @@ Follow these steps to get the project up and running:
 4. **Setup Database:**
     - Create a new database called "dacsproject"
     - Add the tables from ```db-tables```
-    - Adding tables must be with the following order:
+    - Adding tables must be in the following order:
         - users
         - books
         - members
