@@ -10,7 +10,7 @@ The Library Management System is intended for library staff and administrators t
 
 <br/>
 
-## 2. Non-Functional Requirements
+## 2. Non-Functional Requirements 
 
 - Security:	The system should ensure security against potential threats.
 - Performance:	The system should process transactions within 2 seconds.
